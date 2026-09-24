@@ -74,12 +74,18 @@ smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "err
 												alpha=0.99,
 												k=100) {
 	wide_pragma <- match.arg(wide_pragma)
-	list(wide_pragma=wide_pragma, alpha=alpha, k=k)
+	tall_pragma <- match.arg(tall_pragma)
+	if ((wide_pragma=='alpha') && ((alpha < 0) || (alpha > 1))) { 
+		stop("Must given alpha in [0, 1]")
+	}
+	list(wide_pragma=wide_pragma, tall_pragma=tall_pragma, alpha=alpha, k=k)
 }
 
 .do_svd <- function(X, control=list(), ...) {
 	control <- do.call("smam.control", control)
-	if (nrow(X) < ncol(X)) {
+	n <- nrow(X)
+	p <- ncol(X)
+	if (n < p) {
 		switch(control$wide_pragma,
 					 SIRS={ stop("not yet implemented") },
 					 SIRSu={ 
@@ -352,6 +358,7 @@ smam <- function(formula,data,weights=NULL,na.action=na.omit,method=c('jackknife
 	X <- model.matrix(formula,mf)
 	y <- as.vector(model.response(mf))
 	wt <- as.vector(model.weights(mf))
+	# 2FIX: does this model deal with offsets properly?
 
 	dat <- list(X=X,y=y,wt=wt,Xnames=colnames(X))
 	# call the fit function
@@ -366,7 +373,6 @@ smam <- function(formula,data,weights=NULL,na.action=na.omit,method=c('jackknife
 #' @importFrom stats predict
 #' @param newdata  a \code{data.frame} from which we can extract a model
 #' frame via the formula of the \code{object}.
-#' @template param-group
 #' @param ... other arguments.
 #' @param type  indicates which prediction should be returned:
 #' \describe{
@@ -386,6 +392,14 @@ predict.smam <- function(
   na.action = na.pass,
   ...
 ) {
+  if (missing(newdata) || is.null(newdata)) {
+    if (!is.null(object$fitted.values)) {
+      return(object$fitted.values)
+    } else {
+      stop("predict.smam requires newdata unless the model was fit with return.fitted = TRUE")
+    }
+  }
+
   fmla <- object$formula
   tt <- terms(fmla)
   Terms <- delete.response(tt)

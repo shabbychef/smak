@@ -53,7 +53,7 @@
 #' 
 #' This package is maintained as a hobby. 
 #'
-NULL
+"_PACKAGE"
 
 #' @title News for package 'smak':
 #'
