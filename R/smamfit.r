@@ -95,6 +95,7 @@ smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "err
 					 fixed_k={
 						 nuv <- min(nrow(X), control$k)
 						 USV <- svd(X, nu=nuv, nv=nuv)
+						 USV$d <- USV$d[1:control$k]
 					 },
 					 alpha={
 						 USV <- svd(X)

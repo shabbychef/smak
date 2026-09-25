@@ -132,7 +132,26 @@ test_that("broom::augment", { #FOLDUP
 	expect_error(prd2 <- augment(afit), NA)
 }) #UNFOLD
 
-context("methods") #FOLDUP
+context("wide data") 
+test_that("wide methods", { #FOLDUP
+	nobs <- 100
+  nfeat <- nobs + 20
+  set.seed(4567)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  eta <- X %*% beta
+	y <- rnorm(length(eta), mean=eta)
+	# fine
+	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='alpha',alpha=0.5)),NA)
+	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='fixed_k',k=10)),NA)
+	# throw.
+	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='error')))
+	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='unknown method')))
+	# not yet implemented.
+	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='SIRS')),'not yet implemented')
+	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='SIRSu')),'not yet implemented')
+}) #UNFOLD
+
 
 #for vim modeline: (do not edit)
 # vim:ts=2:sw=2:tw=79:fdm=marker:fmr=FOLDUP,UNFOLD:cms=#%s:syn=r:ft=r:ai:si:cin:nu:fo=croql:cino=p0t0c5(0:
