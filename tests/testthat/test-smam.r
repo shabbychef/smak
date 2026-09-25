@@ -34,9 +34,7 @@ set.char.seed <- function(str) {
 #UNFOLD
 
 context("smoke test") #FOLDUP
-
-test_that("smamfit", {
-  #FOLDUP
+test_that("smamfit and smam", { #FOLDUP
   # travis only?
   #skip_on_cran()
   nfeat <- 5
@@ -47,8 +45,94 @@ test_that("smamfit", {
   eta <- X %*% beta
 	y <- rnorm(length(eta), mean=eta)
 	expect_error(afit <- smamfit(y, X), NA)
+	# same results from data frame
+	Xdf <- as.data.frame(X)
+	varnames <- names(afit$beta)
+	colnames(Xdf) <- varnames
+	Xdf$y <- y
+	fmla <- as.formula(paste0("y ~ -1 + ",paste(varnames,collapse=" + ")))
+	expect_error(bfit <- smam(fmla, Xdf), NA)
+	expect_equal(afit$beta, bfit$beta)
+}) #UNFOLD
+test_that("mma and jma", { #FOLDUP
+  nfeat <- 5
+	nobs <- 100
+  set.seed(4567)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  eta <- X %*% beta
+	y <- rnorm(length(eta), mean=eta)
+	for (method in c('jackknife','mallows')) {
+		expect_error(afit <- smamfit(y, X, method=method), NA)
+	}
+}) #UNFOLD
+test_that("broom::tidy", { #FOLDUP
+  nfeat <- 5
+	nobs <- 100
+  set.seed(1234)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  eta <- X %*% beta
+	y <- rnorm(length(eta), mean=eta)
+	expect_error(afit <- smamfit(y, X), NA)
+	expect_error(resp <- tidy(afit), NA)
+	expect_equal(as.numeric(afit$beta), resp$estimate)
 }) #UNFOLD
 #UNFOLD
+
+context("predict") #FOLDUP
+test_that("predict method", { #FOLDUP
+  nfeat <- 5
+	nobs <- 100
+  set.seed(4567)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  eta <- X %*% beta
+	y <- rnorm(length(eta), mean=eta)
+	expect_error(afit <- smamfit(y, X), NA)
+	expect_error(prd1 <- predict(afit), NA)
+	expect_equal(prd1, afit$fitted.values)
+	# now on new data.
+  newX <- matrix(rnorm(10 * nfeat), ncol = nfeat)
+	varnames <- names(afit$beta)
+	newXdf <- as.data.frame(newX)
+	colnames(newXdf) <- varnames
+	# fails without a formula.
+	expect_error(prd1 <- predict(afit, newdata=newXdf))
+
+	# same results from data frame
+	Xdf <- as.data.frame(X)
+	varnames <- names(afit$beta)
+	colnames(Xdf) <- varnames
+	Xdf$y <- y
+	fmla <- as.formula(paste0("y ~ -1 + ",paste(varnames,collapse=" + ")))
+	expect_error(bfit <- smam(fmla, Xdf), NA)
+	expect_error(prd2 <- predict(bfit, newdata=newXdf), NA)
+
+	expect_error(afit2 <- smamfit(y, X, formula=fmla), NA)
+	expect_error(prd3 <- predict(afit2, newdata=newXdf), NA)
+
+}) #UNFOLD
+test_that("broom::augment", { #FOLDUP
+  nfeat <- 5
+	nobs <- 100
+  set.seed(4567)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  eta <- X %*% beta
+	y <- rnorm(length(eta), mean=eta)
+	Xdf <- as.data.frame(X)
+	varnames <- colnames(Xdf)
+	Xdf$y <- y
+	fmla <- as.formula(paste0("y ~ -1 + ",paste(varnames,collapse=" + ")))
+
+	expect_error(afit <- smam(fmla, Xdf), NA)
+	expect_error(prd1 <- augment(afit, newdata=Xdf), NA)
+	# this fails.
+	expect_error(prd2 <- augment(afit), NA)
+}) #UNFOLD
+
+context("methods") #FOLDUP
 
 #for vim modeline: (do not edit)
 # vim:ts=2:sw=2:tw=79:fdm=marker:fmr=FOLDUP,UNFOLD:cms=#%s:syn=r:ft=r:ai:si:cin:nu:fo=croql:cino=p0t0c5(0:

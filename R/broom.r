@@ -112,21 +112,32 @@ tidy.smam <- function(x, ...) {
 #' @name augment
 #' @export
 augment.smam <- function(x, 
-       data = model.frame(x),
+       data = NULL,
        newdata = NULL,
        se_fit = FALSE,
-			 ...) {
-	stopifnot(!se_fit)
-	if (is.null(newdata)) {
-		preds <- predict(x, ...)
-		res <- as.data.frame(data)
-	} else {
-		preds <- predict(x, newdata = newdata, ...)
-		res <- as.data.frame(newdata)
-	}
+       ...) {
+  stopifnot(!se_fit)
 
-	res$.fitted <- as.numeric(preds)
-	return(tibble::as_tibble(res))
+  if (is.null(data) && is.null(newdata)) {
+    if (!is.null(x$model)) {
+      data <- x$model
+    } else if (!is.null(x$terms)) {
+      data <- model.frame(x)
+    } else {
+      data <- as.data.frame(x$X)
+    }
+  }
+
+  if (is.null(newdata)) {
+    preds <- predict(x, ...)
+    res <- as.data.frame(data)
+  } else {
+    preds <- predict(x, newdata = newdata, ...)
+    res <- as.data.frame(newdata)
+  }
+
+  res$.fitted <- as.numeric(preds)
+  return(tibble::as_tibble(res))
 }
 
 #for vim modeline: (do not edit)

@@ -161,6 +161,7 @@ smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "err
 #' the output. 
 #' @param control a list of parameters for controlling the the fitting process.
 #' This is passed to \code{\link{smam.control}}.
+#' @param formula  an optional formula which will be saved in the object for prediction step later.
 #' @return An object of class \code{smam}.
 #' @keywords fitting
 #' @seealso the friendly interface \code{\link{smam}}.
@@ -181,105 +182,106 @@ smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "err
 #' summary(mod0)
 #' @export
 smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL, 
-										Xnames=NULL, return.U=FALSE, return.X=TRUE, return.fitted=TRUE, 
-										control=list(...), ...) {
-	method <- match.arg(method)
+                    Xnames=NULL, return.U=FALSE, return.X=TRUE, return.fitted=TRUE, 
+                    control=list(...), formula=NULL, ...) {
+  method <- match.arg(method)
 
   y <- as.numeric(y)
-	n <- nrow(X)
-	p <- ncol(X)
-	stopifnot(n == length(y))
+  n <- nrow(X)
+  p <- ncol(X)
+  stopifnot(n == length(y))
 
-	if (is.null(Xnames)) {
-		Xnames <- colnames(X)
-		if (is.null(Xnames)) {
-			Xnames <- paste0("X_",seq_len(p))
-		}
-	}
+  if (is.null(Xnames)) {
+    Xnames <- colnames(X)
+    if (is.null(Xnames)) {
+      Xnames <- paste0("X_",seq_len(p))
+    }
+  }
 
-	if (!is.null(wt)) {
-		stopifnot(n == length(wt), all(wt >= 0))
-		root_w <- sqrt(wt)
+  if (!is.null(wt)) {
+    stopifnot(n == length(wt), all(wt >= 0))
+    root_w <- sqrt(wt)
     y <- root_w * y
-		USV <- .do_svd(root_w * X, control=control)
-	} else {
-		USV <- .do_svd(X, control=control)
-	}
+    USV <- .do_svd(root_w * X, control=control)
+  } else {
+    USV <- .do_svd(X, control=control)
+  }
 
 
-	U <- USV$u
+  U <- USV$u
   D_inv <- 1 / USV$d
-	V <- USV$v
+  V <- USV$v
 
-	k <- ncol(U)
-	Unames <- colnames(U)
-	if (is.null(Unames)) {
-		Unames <- paste0("U_",seq_len(k))
-	}
+  k <- ncol(U)
+  Unames <- colnames(U)
+  if (is.null(Unames)) {
+    Unames <- paste0("U_",seq_len(k))
+  }
 
-	# compute the univariate betas, which is are the betas of each U against y
-	betas <- t(U) %*% y
-	# compute the mu hats
-	muhats = t(t(U) * as.numeric(betas))
-	# compute the weights hat{w}_j
-	switch(method,
-		jackknife={
-			Dmat <- 2 * crossprod(t(t(muhats) - y) / (1 - U^2))
-			dvec <- rep(0, k)
-			factorized <- FALSE
-			# Ensure Dmat is positive definite for solve.QP numerical stability
-			diag(Dmat) <- diag(Dmat) + 1e-10
-		},
-		mallows={
-			# dMatrix will be 2 * diag(betas^2), and we want the inverse of the
-			# square root of this, so (1/sqrt(2)) * diag(betas^-1)
-			invRmat <- (1/sqrt(2)) * diag(1 / as.numeric(betas), nrow=k)
-			b2 <- betas^2
-			if (is.null(sigma2)) {
-				rss_full <- sum(y^2) - sum(b2)
-				if (n > k) {
-					sigma2 <- rss_full / (n - k)
-				} else {
-					# Fallback for saturated cases
-					sigma2 <- rss_full / n
-				}
-			} 
-			Dmat <- invRmat
-			dvec <- 2 * (b2 - sigma2)
-			factorized <- TRUE
-		})
+  # compute the univariate betas, which is are the betas of each U against y
+  betas <- t(U) %*% y
+  # compute the mu hats
+  muhats = t(t(U) * as.numeric(betas))
+  # compute the weights hat{w}_j
+  switch(method,
+         jackknife={
+           Dmat <- 2 * crossprod(t(t(muhats) - y) / (1 - U^2))
+           dvec <- rep(0, k)
+           factorized <- FALSE
+           # Ensure Dmat is positive definite for solve.QP numerical stability
+           diag(Dmat) <- diag(Dmat) + 1e-10
+         },
+         mallows={
+           # dMatrix will be 2 * diag(betas^2), and we want the inverse of the
+           # square root of this, so (1/sqrt(2)) * diag(betas^-1)
+           invRmat <- (1/sqrt(2)) * diag(1 / as.numeric(betas), nrow=k)
+           b2 <- betas^2
+           if (is.null(sigma2)) {
+             rss_full <- sum(y^2) - sum(b2)
+             if (n > k) {
+               sigma2 <- rss_full / (n - k)
+             } else {
+               # Fallback for saturated cases
+               sigma2 <- rss_full / n
+             }
+           } 
+           Dmat <- invRmat
+           dvec <- 2 * (b2 - sigma2)
+           factorized <- TRUE
+         })
 
-	# constraints are sum(w) = 1 and w_j >= 0
+  # constraints are sum(w) = 1 and w_j >= 0
   Amat <- cbind(rep(1, k), diag(k))
   bvec <- c(1, rep(0, k))
-	meq <- 1
-	
-	# solve the quadratic program
+  meq <- 1
+
+  # solve the quadratic program
   res   <- quadprog::solve.QP(Dmat, dvec, Amat, bvec, meq = meq, factorized=factorized)
 
-	# interpret
+  # interpret
   w_opt <- res$solution
-  
+
   # Numerical cleanup
   w_opt[w_opt < 0] <- 0
   w_opt <- w_opt / sum(w_opt)
-  
+
   # Fitted values and beta in original (unscaled) space.
   # In scaled space: fitted_tilde = U %*% (w_opt * a) = W^{1/2} fitted_y.
   # Back-transform by dividing by root_w when observation weights were supplied.
   theta_hat <- betas * w_opt
-  
+
   # beta = V D^{-1} theta_hat  (gives WLS estimate in original parameterization)
   beta_hat <- as.vector(V %*% (D_inv * theta_hat))
-  
+
   retv <- list(
-    beta = beta_hat,
-    weights = w_opt,
-    univariate_betas = betas,
-    sigma2 = sigma2
+               beta = beta_hat,
+               weights = w_opt,
+               univariate_betas = betas,
+               sigma2 = sigma2,
+               formula = formula
   )
-	names(retv$beta) <- Xnames
-	names(retv$weights) <- Unames
+  names(retv$beta) <- Xnames
+  names(retv$weights) <- Unames
 	names(retv$univariate_betas) <- Unames
 	if (return.U) { retv$U <- U }
 	if (return.X) { retv$X <- X }
@@ -339,33 +341,34 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
 #' @export
 #' @rdname smam
 smam <- function(formula,data,weights=NULL,na.action=na.omit,method=c('jackknife','mallows'), ...) {
-	substitute(formula)
-	# I find it highly offensive that this cannot be done reasonably
-	# easily in a subfunction because of NSE whatever.
+  substitute(formula)
+  # I find it highly offensive that this cannot be done reasonably
+  # easily in a subfunction because of NSE whatever.
 
-	# https://stackoverflow.com/q/53827563/164611
-	cl <- match.call()
-	mf <- match.call(expand.dots = FALSE)
-	strmf <- as.character(mf)
-	#turn weights into symbol if character is passed
-	if (is.character(mf$weights)) mf$weights <- as.symbol(mf$weights)
-	m <- match(c("formula", "data", "weights", "na.action"), names(mf), 0L)
-	mf <- mf[c(1L, m)]
-	mf$drop.unused.levels <- TRUE 
-	mf[[1L]] <- quote(stats::model.frame) 
-	mf <- eval(mf, parent.frame()) #evaluate call
+  # https://stackoverflow.com/q/53827563/164611
+  cl <- match.call()
+  mf <- match.call(expand.dots = FALSE)
+  strmf <- as.character(mf)
+  #turn weights into symbol if character is passed
+  if (is.character(mf$weights)) mf$weights <- as.symbol(mf$weights)
+  m <- match(c("formula", "data", "weights", "na.action"), names(mf), 0L)
+  mf <- mf[c(1L, m)]
+  mf$drop.unused.levels <- TRUE 
+  mf[[1L]] <- quote(stats::model.frame) 
+  mf <- eval(mf, parent.frame()) #evaluate call
 
-	X <- model.matrix(formula,mf)
-	y <- as.vector(model.response(mf))
-	wt <- as.vector(model.weights(mf))
-	# 2FIX: does this model deal with offsets properly?
+  X <- model.matrix(formula,mf)
+  y <- as.vector(model.response(mf))
+  wt <- as.vector(model.weights(mf))
+  # 2FIX: does this model deal with offsets properly?
 
-	dat <- list(X=X,y=y,wt=wt,Xnames=colnames(X))
-	# call the fit function
-	retv <- smamfit(y=dat$y, X=dat$X, wt=dat$wt, method=method, Xnames=dat$Xnames, ...)
-	retv$call <- cl
-	retv$formula <- formula
-	return(retv)
+  dat <- list(X=X,y=y,wt=wt,Xnames=colnames(X))
+  # call the fit function
+  retv <- smamfit(y=dat$y, X=dat$X, wt=dat$wt, method=method, Xnames=dat$Xnames, formula=formula, ...)
+  retv$call <- cl
+  retv$terms <- terms(mf)
+  retv$model <- mf
+  return(retv)
 }
 
 
@@ -401,6 +404,10 @@ predict.smam <- function(
   }
 
   fmla <- object$formula
+  if (is.null(fmla)) {
+    stop("predict.smam requires a formula in the fitted object to predict on newdata. Use smam() instead of smamfit() or perform matrix multiplication manually.")
+  }
+
   tt <- terms(fmla)
   Terms <- delete.response(tt)
 
@@ -418,7 +425,7 @@ predict.smam <- function(
   mf[[2L]] <- Terms
   mf <- eval(mf, parent.frame()) #evaluate call
   X <- model.matrix(as.formula(Terms), mf)
-	# ooff, what do we do with this?
+  # ooff, what do we do with this?
   y0 <- model.offset(mf)
   wt <- as.vector(model.weights(mf))
 
@@ -443,12 +450,12 @@ predict.smam <- function(
 #' @rdname smam
 #' @method print smam
 print.smam <- function(x, ...) {
-	cat("Call:",'\n')
-	show(x$call)
-	cat('\n')
-	cat("Coefficients:",'\n')
-	show(x$beta)
-	invisible(x)
+  cat("Call:",'\n')
+  show(x$call)
+  cat('\n')
+  cat("Coefficients:",'\n')
+  show(x$beta)
+  invisible(x)
 }
 
 #for vim modeline: (do not edit)
