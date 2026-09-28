@@ -81,16 +81,34 @@ smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "err
 	list(wide_pragma=wide_pragma, tall_pragma=tall_pragma, alpha=alpha, k=k)
 }
 
-.do_svd <- function(X, control=list(), ...) {
+# y is needed just to do sirs, btw.
+.do_svd <- function(X, y, control=list(), ...) {
 	control <- do.call("smam.control", control)
 	n <- nrow(X)
 	p <- ncol(X)
 	if (n < p) {
 		switch(control$wide_pragma,
-					 SIRS={ stop("not yet implemented") },
+					 SIRS={ 
+						 # 2FIX: should this be deterministic?
+						 selvars <- sirs(y, X, thresholding='soft')
+						 if (length(selvars) < 1) {
+							 selvars <- sirs(y, X, thresholding='hard')
+						 }
+						 USV <- svd(X[,selvars,drop=FALSE])
+						 newv <- matrix(0, nrow=ncol(X), ncol=length(selvars))
+						 newv[selvars,] <- USV$v
+						 USV$v <- newv
+					 },
 					 SIRSu={ 
 						 USV <- svd(X)
-						 stop("not yet implemented") 
+						 # 2FIX: should this be deterministic?
+						 selvars <- sirs(y, USV$u, thresholding='soft')
+						 if (length(selvars) < 1) {
+							 selvars <- sirs(y, USV$u, thresholding='hard')
+						 }
+						 USV$u <- USV$u[,selvars,drop=FALSE]
+						 USV$d <- USV$d[selvars]
+						 USV$v <- USV$v[,selvars,drop=FALSE]
 					 },
 					 fixed_k={
 						 nuv <- min(nrow(X), control$k)
@@ -203,9 +221,9 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
     stopifnot(n == length(wt), all(wt >= 0))
     root_w <- sqrt(wt)
     y <- root_w * y
-    USV <- .do_svd(root_w * X, control=control)
+    USV <- .do_svd(root_w * X, y, control=control)
   } else {
-    USV <- .do_svd(X, control=control)
+    USV <- .do_svd(X, y, control=control)
   }
 
 

@@ -144,12 +144,11 @@ test_that("wide methods", { #FOLDUP
 	# fine
 	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='alpha',alpha=0.5)),NA)
 	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='fixed_k',k=10)),NA)
+	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='SIRS')),NA)
+	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='SIRSu')),NA)
 	# throw.
 	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='error')))
 	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='unknown method')))
-	# not yet implemented.
-	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='SIRS')),'not yet implemented')
-	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='SIRSu')),'not yet implemented')
 }) #UNFOLD
 
 
