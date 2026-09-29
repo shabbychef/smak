@@ -178,6 +178,41 @@ test_that("model and predict handle offset", { #FOLDUP
   newXdf$off_set <- rnorm(10)
   expect_error(prd2 <- predict(afit, newdata = newXdf), NA)
 }) #UNFOLD
+test_that("model and predict handle factors", { #FOLDUP
+  nobs <- 100
+  nfeat <- 5
+	nlevl <- 3
+  set.seed(456)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  eta <- X %*% beta
+	# now do something here with the factor ...
+	ebeta <- runif(nlevl)
+	fac_idx <- sample(seq_along(ebeta), size=nobs, replace=TRUE)
+	eta <- eta + ebeta[fac_idx]
+  y <- rnorm(length(eta), mean = eta)
+
+  Xdf <- as.data.frame(X)
+  varnames <- colnames(Xdf)
+  Xdf$y <- y
+  Xdf$fac <- factor(letters[fac_idx])
+
+  fmla <- as.formula(paste0("y ~ -1 + fac + ", paste(varnames, collapse=" + ")))
+  expect_error(afit <- smam(fmla, Xdf), NA)
+
+  # fitted values should be roughly y, and they should match predict()
+  prd1 <- predict(afit)
+  expect_equal(prd1, afit$fitted.values)
+
+  # predict on new data with new offset
+  newX <- matrix(rnorm(10 * nfeat), ncol = nfeat)
+  newXdf <- as.data.frame(newX)
+  colnames(newXdf) <- varnames
+	for (idx in seq_len(nlevl)) {
+		newXdf$fac <- factor(letters[idx], levels=letters[seq_len(nlevl)])
+		expect_error(prd2 <- predict(afit, newdata = newXdf), NA)
+	}
+}) #UNFOLD
 test_that("broom::augment", { #FOLDUP
   nfeat <- 5
   nobs <- 100
