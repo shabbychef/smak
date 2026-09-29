@@ -253,7 +253,10 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
          mallows={
            # dMatrix will be 2 * diag(betas^2), and we want the inverse of the
            # square root of this, so (1/sqrt(2)) * diag(betas^-1)
-           invRmat <- (1/sqrt(2)) * diag(1 / as.numeric(betas), nrow=k)
+					 # but avoid zeroes in the betas by pushing them away from zero
+					 puffed_beta <- as.numeric(betas)
+					 puffed_beta <- puffed_beta + pmax(abs(puffed_beta), 1e-8) * ifelse(puffed_beta < 0,-1,1)
+           invRmat <- (1/sqrt(2)) * diag(1 / puffed_beta, nrow=k)
            b2 <- betas^2
            if (is.null(sigma2)) {
              rss_full <- sum(y^2) - sum(b2)
