@@ -71,76 +71,76 @@ setOldClass('smam')
 #' @template etc
 #' @export
 smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "error"),
-												tall_pragma=c("tolerance", "none"),
-												alpha=0.99,
-												k=100) {
-	wide_pragma <- match.arg(wide_pragma)
-	tall_pragma <- match.arg(tall_pragma)
-	if ((wide_pragma=='alpha') && ((alpha < 0) || (alpha > 1))) { 
-		stop("Must given alpha in [0, 1]")
-	}
-	list(wide_pragma=wide_pragma, tall_pragma=tall_pragma, alpha=alpha, k=k)
+                        tall_pragma=c("tolerance", "none"),
+                        alpha=0.99,
+                        k=100) {
+  wide_pragma <- match.arg(wide_pragma)
+  tall_pragma <- match.arg(tall_pragma)
+  if ((wide_pragma=='alpha') && ((alpha < 0) || (alpha > 1))) { 
+    stop("Must given alpha in [0, 1]")
+  }
+  list(wide_pragma=wide_pragma, tall_pragma=tall_pragma, alpha=alpha, k=k)
 }
 
 # y is needed just to do sirs, btw.
 .do_svd <- function(X, y, control=list(), ...) {
-	control <- do.call("smam.control", control)
-	n <- nrow(X)
-	p <- ncol(X)
-	if (n < p) {
-		switch(control$wide_pragma,
-					 SIRS={ 
-						 # 2FIX: should this be deterministic?
-						 selvars <- sirs(y, X, thresholding='soft')
-						 if (length(selvars) < 1) {
-							 selvars <- sirs(y, X, thresholding='hard')
-						 }
-						 USV <- svd(X[,selvars,drop=FALSE])
-						 newv <- matrix(0, nrow=ncol(X), ncol=length(selvars))
-						 newv[selvars,] <- USV$v
-						 USV$v <- newv
-					 },
-					 SIRSu={ 
-						 USV <- svd(X)
-						 # 2FIX: should this be deterministic?
-						 selvars <- sirs(y, USV$u, thresholding='soft')
-						 if (length(selvars) < 1) {
-							 selvars <- sirs(y, USV$u, thresholding='hard')
-						 }
-						 USV$u <- USV$u[,selvars,drop=FALSE]
-						 USV$d <- USV$d[selvars]
-						 USV$v <- USV$v[,selvars,drop=FALSE]
-					 },
-					 fixed_k={
-						 nuv <- min(nrow(X), control$k)
-						 USV <- svd(X, nu=nuv, nv=nuv)
-						 USV$d <- USV$d[1:control$k]
-					 },
-					 alpha={
-						 USV <- svd(X)
-						 k <- max(1, sum(cumsum(USV$d) < control$alpha * sum(USV$d)))
-						 USV$u <- USV$u[, 1:k, drop = FALSE]
-						 USV$d <- USV$d[1:k]
-						 USV$v <- USV$v[, 1:k, drop = FALSE]
-					 },
-					 error={ stop("Will not perform SVD on wide matrix under this pragma.") })
-	} else {
-		# perform SVD
-		USV <- svd(X)
-		switch(control$tall_pragma,
-			none={
-				# noop
-			},
-			tolerance={
-				tol <- max(n, p) * USV$d[1] * .Machine$double.eps
-				k <- sum(USV$d > tol)
-				USV$u <- USV$u[, 1:k, drop = FALSE]
-				USV$d <- USV$d[1:k]
-				USV$v <- USV$v[, 1:k, drop = FALSE]
-			}
-		)
-	}
-	return(USV)
+  control <- do.call("smam.control", control)
+  n <- nrow(X)
+  p <- ncol(X)
+  if (n < p) {
+    switch(control$wide_pragma,
+           SIRS={ 
+             # 2FIX: should this be deterministic?
+             selvars <- sirs(y, X, thresholding='soft')
+             if (length(selvars) < 1) {
+               selvars <- sirs(y, X, thresholding='hard')
+             }
+             USV <- svd(X[,selvars,drop=FALSE])
+             newv <- matrix(0, nrow=ncol(X), ncol=length(selvars))
+             newv[selvars,] <- USV$v
+             USV$v <- newv
+           },
+           SIRSu={ 
+             USV <- svd(X)
+             # 2FIX: should this be deterministic?
+             selvars <- sirs(y, USV$u, thresholding='soft')
+             if (length(selvars) < 1) {
+               selvars <- sirs(y, USV$u, thresholding='hard')
+             }
+             USV$u <- USV$u[,selvars,drop=FALSE]
+             USV$d <- USV$d[selvars]
+             USV$v <- USV$v[,selvars,drop=FALSE]
+           },
+           fixed_k={
+             nuv <- min(nrow(X), control$k)
+             USV <- svd(X, nu=nuv, nv=nuv)
+             USV$d <- USV$d[1:control$k]
+           },
+           alpha={
+             USV <- svd(X)
+             k <- max(1, sum(cumsum(USV$d) < control$alpha * sum(USV$d)))
+             USV$u <- USV$u[, 1:k, drop = FALSE]
+             USV$d <- USV$d[1:k]
+             USV$v <- USV$v[, 1:k, drop = FALSE]
+           },
+           error={ stop("Will not perform SVD on wide matrix under this pragma.") })
+  } else {
+    # perform SVD
+    USV <- svd(X)
+    switch(control$tall_pragma,
+      none={
+        # noop
+      },
+      tolerance={
+        tol <- max(n, p) * USV$d[1] * .Machine$double.eps
+        k <- sum(USV$d > tol)
+        USV$u <- USV$u[, 1:k, drop = FALSE]
+        USV$d <- USV$d[1:k]
+        USV$v <- USV$v[, 1:k, drop = FALSE]
+      }
+    )
+  }
+  return(USV)
 }
 
 
@@ -254,9 +254,9 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
          mallows={
            # dMatrix will be 2 * diag(betas^2), and we want the inverse of the
            # square root of this, so (1/sqrt(2)) * diag(betas^-1)
-					 # but avoid zeroes in the betas by pushing them away from zero
-					 puffed_beta <- as.numeric(betas)
-					 puffed_beta <- puffed_beta + pmax(abs(puffed_beta), 1e-8) * ifelse(puffed_beta < 0,-1,1)
+           # but avoid zeroes in the betas by pushing them away from zero
+           puffed_beta <- as.numeric(betas)
+           puffed_beta <- puffed_beta + pmax(abs(puffed_beta), 1e-8) * ifelse(puffed_beta < 0,-1,1)
            invRmat <- (1/sqrt(2)) * diag(1 / puffed_beta, nrow=k)
            b2 <- betas^2
            if (is.null(sigma2)) {
@@ -305,15 +305,15 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
   )
   names(retv$beta) <- Xnames
   names(retv$weights) <- Unames
-	names(retv$univariate_betas) <- Unames
-	if (return.U) { retv$U <- U }
-	if (return.X) { retv$X <- X }
-	if (return.fitted) {
-		fitted_scaled <- as.vector(U %*% theta_hat)
-		retv$fitted.values <- if (!is.null(wt)) fitted_scaled / root_w else fitted_scaled
-	}
-	class(retv) <- 'smam'
-	return(retv)
+  names(retv$univariate_betas) <- Unames
+  if (return.U) { retv$U <- U }
+  if (return.X) { retv$X <- X }
+  if (return.fitted) {
+    fitted_scaled <- as.vector(U %*% theta_hat)
+    retv$fitted.values <- if (!is.null(wt)) fitted_scaled / root_w else fitted_scaled
+  }
+  class(retv) <- 'smam'
+  return(retv)
 }
 
 #' @title Friendly interface to scalable model averaging regression.
@@ -397,7 +397,7 @@ smam <- function(formula,data,weights=NULL,na.action=na.omit,method=c('jackknife
   retv$call <- cl
   retv$terms <- terms(mf)
   retv$model <- mf
-	retv$xlevels <- .getXlevels(retv$terms, mf)
+  retv$xlevels <- .getXlevels(retv$terms, mf)
   return(retv)
 }
 
@@ -449,8 +449,6 @@ predict.smam <- function(
   m <- match(c("data", "na.action"), names(mf), 0L)
   mf <- mf[c(1L, 1L, m)]
   mf$drop.unused.levels <- TRUE
-  # need this
-	# .getXlevels(tt, mf)
   mf$xlev <- object$xlevels
   mf[[1L]] <- quote(stats::model.frame)
   mf[[2L]] <- Terms

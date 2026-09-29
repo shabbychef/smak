@@ -26,29 +26,29 @@
 # Computes the \hat{w} vector to perform SIRS variable selection.
 .what <- function(y, X, ties_pragma=c('ignore','half_value')) {
   ties_pragma <- match.arg(ties_pragma)
-	sidx <- sort(y, index.return=TRUE)
-	y <- sidx$x
-	X <- X[sidx$ix, ,drop=FALSE]
-	n <- nrow(X)
-	switch(ties_pragma,
-	ignore={
-		wtilde <- rep(0, ncol(X))
-		for (jidx in (2:n)) {
-			iidx <- which(y[1:(jidx-1)] < y[jidx])
-			wtilde <- wtilde + (colSums(X[iidx,,drop=FALSE]))^2
-		}
-	},
-	half_value={
-		wtilde <- rep(0, ncol(X))
-		for (jidx in (2:n)) {
-			less_idx <- which(y[1:(jidx-1)] < y[jidx])
-			eq_idx <- which(y == y[jidx])
-			wtilde <- wtilde + (colSums(X[less_idx,,drop=FALSE]) + 0.5*(colSums(X[eq_idx,,drop=FALSE]) - X[jidx,]))^2
-		}
-	})
-	# this is a U statistic
-	what <- wtilde / (n*(n-1)*(n-2))
-	return(what)
+  sidx <- sort(y, index.return=TRUE)
+  y <- sidx$x
+  X <- X[sidx$ix, ,drop=FALSE]
+  n <- nrow(X)
+  switch(ties_pragma,
+  ignore={
+    wtilde <- rep(0, ncol(X))
+    for (jidx in (2:n)) {
+      iidx <- which(y[1:(jidx-1)] < y[jidx])
+      wtilde <- wtilde + (colSums(X[iidx,,drop=FALSE]))^2
+    }
+  },
+  half_value={
+    wtilde <- rep(0, ncol(X))
+    for (jidx in (2:n)) {
+      less_idx <- which(y[1:(jidx-1)] < y[jidx])
+      eq_idx <- which(y == y[jidx])
+      wtilde <- wtilde + (colSums(X[less_idx,,drop=FALSE]) + 0.5*(colSums(X[eq_idx,,drop=FALSE]) - X[jidx,]))^2
+    }
+  })
+  # this is a U statistic
+  what <- wtilde / (n*(n-1)*(n-2))
+  return(what)
 }
 
 # Performs the SIRS algorithm of zhu et al.
@@ -111,7 +111,7 @@
 #' all(true_vars %in% hard_vals)
 #' @export
 sirs <- function(y, X, thresholding=c('hard','soft'), N=NULL, d_prop=1.0,
-								 ties_pragma=c('ignore', 'half_value')) {
+                 ties_pragma=c('ignore', 'half_value')) {
   thresholding <- match.arg(thresholding)
   ties_pragma <- match.arg(ties_pragma)
   y <- as.numeric(y)
@@ -125,22 +125,22 @@ sirs <- function(y, X, thresholding=c('hard','soft'), N=NULL, d_prop=1.0,
   colsd[colsd == 0] <- 1
   X <- scale(X, center=TRUE, scale=colsd)
 
-	switch(thresholding,
-				 hard={ 
-					 if (is.null(N)) {
-						 N <- ceiling(n/log(n))
-					 }
-					 what <- .what(y, X, ties_pragma=ties_pragma)
+  switch(thresholding,
+         hard={ 
+           if (is.null(N)) {
+             N <- ceiling(n/log(n))
+           }
+           what <- .what(y, X, ties_pragma=ties_pragma)
            sort_what <- sort(what, decreasing=TRUE, index.return=TRUE)
            retval <- sort_what$ix[1:N]
-				 },
-				 soft={ 
-					 n_noise <- ceiling(d_prop * p)
-					 what <- .what(y, cbind(X, matrix(rnorm(n_noise*n),nrow=n)), ties_pragma=ties_pragma)
+         },
+         soft={ 
+           n_noise <- ceiling(d_prop * p)
+           what <- .what(y, cbind(X, matrix(rnorm(n_noise*n),nrow=n)), ties_pragma=ties_pragma)
            C_d <- max(what[p+(1:n_noise)])
            retval <- which(what[1:p] > C_d)
-				 }
-	)
+         }
+  )
   retval <- sort(retval)
   return(retval)
 }

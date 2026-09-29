@@ -67,8 +67,8 @@ generics::augment
 #' @rdname tidy
 #' @export
 tidy.smam <- function(x, ...) {
-	result <- data.frame(term=names(x$beta), estimate=as.numeric(x$beta))
-	return(result)
+  result <- data.frame(term=names(x$beta), estimate=as.numeric(x$beta))
+  return(result)
 }
 
 #' @title Augment
