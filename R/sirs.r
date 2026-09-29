@@ -118,7 +118,7 @@ sirs <- function(y, X, thresholding=c('hard','soft'), N=NULL, d_prop=1.0,
   n <- nrow(X)
   p <- ncol(X)
   stopifnot(n == length(y))
-  stopifnot(n > 1)
+  stopifnot(n > 2)
   
   # Standardize X to have zero mean and unit variance
   colsd <- apply(X, 2, FUN=sd)
