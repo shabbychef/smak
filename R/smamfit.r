@@ -244,7 +244,7 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
   # compute the weights hat{w}_j
   switch(method,
          jackknife={
-           Dmat <- 2 * crossprod(t(t(muhats) - y) / (1 - U^2))
+           Dmat <- 2 * crossprod(t(t(muhats) - y) / pmax((1 - U^2), 1e-8))
            dvec <- rep(0, k)
            factorized <- FALSE
            # Ensure Dmat is positive definite for solve.QP numerical stability
