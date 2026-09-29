@@ -146,4 +146,4 @@ sirs <- function(y, X, thresholding=c('hard','soft'), N=NULL, d_prop=1.0,
 }
 
 #for vim modeline: (do not edit)
-# vim:fdm=marker:fmr=FOLDUP,UNFOLD:cms=#%s:syn=r:ft=r
+# vim:fdm=marker:fmr=FOLDUP,UNFOLD:cms=#%s:et:nu:syn=r:ft=r
