@@ -45,7 +45,8 @@ setOldClass('smam')
 #'  \item{SIRSu}{Implements the SIRS procedure on the left singular values
 #'  \eqn{U}.}
 #'  \item{alpha}{Performs SVD, then keeps the singular values that account for
-#'  at least \eqn{\alpha} of the total sum of singular values.}
+#'  at least \eqn{\alpha} of the total sum of singular values. Always keeps at
+#'  least one column, however.}
 #'  \item{fixed_k}{Keep a fixed number of singular values.}
 #'  \item{error}{Throws an error.}
 #' }
@@ -117,7 +118,7 @@ smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "err
 					 },
 					 alpha={
 						 USV <- svd(X)
-						 k <- sum(cumsum(USV$d) < control$alpha * sum(USV$d))
+						 k <- max(1, sum(cumsum(USV$d) < control$alpha * sum(USV$d)))
 						 USV$u <- USV$u[, 1:k, drop = FALSE]
 						 USV$d <- USV$d[1:k]
 						 USV$v <- USV$v[, 1:k, drop = FALSE]
