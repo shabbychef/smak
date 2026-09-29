@@ -80,6 +80,41 @@ test_that("broom::tidy", { #FOLDUP
 }) #UNFOLD
 #UNFOLD
 
+context("numerical robustness") #FOLDUP
+test_that("mallows method works when a feature is orthogonal to response", {
+	# avoid 1/0 error in inverse R matrix
+  X <- diag(3)
+  y <- c(1, 1, 0) # y is orthogonal to the 3rd singular vector
+  expect_error(smamfit(y=y, X=X, method='mallows'), NA)
+})
+test_that("jackknife method handles saturated models / perfect leverage", {
+	# avoid (1 - U^2) = 0 in jackknife
+  X <- diag(3)
+  y <- c(1, 2, 3)
+  expect_error(smamfit(y=y, X=X, method='jackknife'), NA)
+})
+test_that("sirs throws appropriate error for n=2", {
+	# avoid divide by 0 when n=2 by throwing error.
+  X <- matrix(rnorm(10), nrow=2)
+  y <- rnorm(2)
+  expect_error(sirs(y, X), "n > 2") 
+})
+test_that("predict.smam handles factors with missing levels in newdata", {
+	# predict even when levels are missing
+  df <- data.frame(y=rnorm(4), f=factor(c("A", "B", "A", "B")), x=rnorm(4))
+  mod <- smam(y ~ f + x, data=df)
+  df_new <- data.frame(f=factor(c("A")), x=rnorm(1)) # "B" is missing
+  expect_error(predict(mod, newdata=df_new), NA)
+})
+test_that("smamfit correctly handles small alpha values", {
+	# when alpha is tiny, do not return only zero columns. 
+  X <- matrix(rnorm(30), nrow=3)
+  y <- rnorm(3)
+  expect_error(smamfit(y=y, X=X, method='mallows', 
+                       control=list(wide_pragma="alpha", alpha=1e-10)), NA)
+})
+#UNFOLD
+
 context("predict") #FOLDUP
 test_that("predict method", { #FOLDUP
   nfeat <- 5
@@ -131,8 +166,9 @@ test_that("broom::augment", { #FOLDUP
 	# this fails.
 	expect_error(prd2 <- augment(afit), NA)
 }) #UNFOLD
+#UNFOLD
 
-context("wide data") 
+context("wide data") #FOLDUP
 test_that("wide methods", { #FOLDUP
 	nobs <- 100
   nfeat <- nobs + 20
@@ -150,7 +186,7 @@ test_that("wide methods", { #FOLDUP
 	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='error')))
 	expect_error(afit <- smamfit(y, X, control=list(wide_pragma='unknown method')))
 }) #UNFOLD
-
+#UNFOLD
 
 #for vim modeline: (do not edit)
 # vim:ts=2:sw=2:tw=79:fdm=marker:fmr=FOLDUP,UNFOLD:cms=#%s:syn=r:ft=r:ai:si:cin:nu:fo=croql:cino=p0t0c5(0:
