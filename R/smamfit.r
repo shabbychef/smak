@@ -287,6 +287,8 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
   # Numerical cleanup
   w_opt[w_opt < 0] <- 0
   w_opt <- w_opt / sum(w_opt)
+  # rescale to mean 1, not sum 1.
+  w_opt <- length(w_opt) * w_opt
 
   # Fitted values and beta in original (unscaled) space.
   # In scaled space: fitted_tilde = U %*% (w_opt * a) = W^{1/2} fitted_y.
