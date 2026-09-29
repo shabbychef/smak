@@ -391,6 +391,7 @@ smam <- function(formula,data,weights=NULL,na.action=na.omit,method=c('jackknife
   retv$call <- cl
   retv$terms <- terms(mf)
   retv$model <- mf
+	retv$xlevels <- .getXlevels(retv$terms, mf)
   return(retv)
 }
 
@@ -443,7 +444,8 @@ predict.smam <- function(
   mf <- mf[c(1L, 1L, m)]
   mf$drop.unused.levels <- TRUE
   # need this
-  # mf$xlev <-
+	# .getXlevels(tt, mf)
+  mf$xlev <- object$xlevels
   mf[[1L]] <- quote(stats::model.frame)
   mf[[2L]] <- Terms
   mf <- eval(mf, parent.frame()) #evaluate call
