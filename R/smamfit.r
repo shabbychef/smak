@@ -382,12 +382,18 @@ smam <- function(formula,data,weights=NULL,na.action=na.omit,method=c('jackknife
 
   X <- model.matrix(formula,mf)
   y <- as.vector(model.response(mf))
+  y0 <- as.vector(model.offset(mf))
+  if (!is.null(y0)) {
+    y <- y - y0
+  }
   wt <- as.vector(model.weights(mf))
-  # 2FIX: does this model deal with offsets properly?
 
   dat <- list(X=X,y=y,wt=wt,Xnames=colnames(X))
   # call the fit function
   retv <- smamfit(y=dat$y, X=dat$X, wt=dat$wt, method=method, Xnames=dat$Xnames, formula=formula, ...)
+  if (!is.null(y0) && !is.null(retv$fitted.values)) {
+    retv$fitted.values <- retv$fitted.values + y0
+  }
   retv$call <- cl
   retv$terms <- terms(mf)
   retv$model <- mf

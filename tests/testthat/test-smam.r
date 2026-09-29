@@ -148,6 +148,36 @@ test_that("predict method", { #FOLDUP
 	expect_error(prd3 <- predict(afit2, newdata=newXdf), NA)
 
 }) #UNFOLD
+test_that("model and predict handle offset", { #FOLDUP
+  nobs <- 100
+  nfeat <- 5
+  set.seed(123)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  eta <- X %*% beta
+  # Add some known offset
+  off_set <- rnorm(length(eta))
+  y <- rnorm(length(eta), mean = eta + off_set)
+
+  Xdf <- as.data.frame(X)
+  varnames <- colnames(Xdf)
+  Xdf$y <- y
+  Xdf$off_set <- off_set
+
+  fmla <- as.formula(paste0("y ~ -1 + offset(off_set) + ", paste(varnames, collapse=" + ")))
+  expect_error(afit <- smam(fmla, Xdf), NA)
+
+  # fitted values should be roughly y, and they should match predict()
+  prd1 <- predict(afit)
+  expect_equal(prd1, afit$fitted.values)
+
+  # predict on new data with new offset
+  newX <- matrix(rnorm(10 * nfeat), ncol = nfeat)
+  newXdf <- as.data.frame(newX)
+  colnames(newXdf) <- varnames
+  newXdf$off_set <- rnorm(10)
+  expect_error(prd2 <- predict(afit, newdata = newXdf), NA)
+}) #UNFOLD
 test_that("broom::augment", { #FOLDUP
   nfeat <- 5
 	nobs <- 100
