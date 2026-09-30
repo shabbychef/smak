@@ -78,6 +78,20 @@ test_that("broom::tidy", { #FOLDUP
   expect_error(resp <- tidy(afit), NA)
   expect_equal(as.numeric(afit$beta), resp$estimate)
 }) #UNFOLD
+test_that("coef", { #FOLDUP
+  nfeat <- 5
+  nobs <- 100
+  set.seed(1234)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  eta <- X %*% beta
+  y <- rnorm(length(eta), mean=eta)
+  expect_error(afit <- smamfit(y, X), NA)
+  expect_error(resp <- coef(afit), NA)
+  expect_equal(as.numeric(afit$beta), as.numeric(resp))
+  expect_error(resp <- coefficients(afit), NA)
+  expect_equal(as.numeric(afit$beta), as.numeric(resp))
+}) #UNFOLD
 #UNFOLD
 
 context("numerical robustness") #FOLDUP
@@ -112,6 +126,22 @@ test_that("smamfit correctly handles small alpha values", {
   y <- rnorm(3)
   expect_error(smamfit(y=y, X=X, method='mallows', 
                        control=list(wide_pragma="alpha", alpha=1e-10)), NA)
+})
+#UNFOLD
+
+context("vs OLS") #FOLDUP
+test_that("sma gives results like OLS for large n", {
+  nobs <- 100000
+  nprd <- 3
+  set.seed(1234)
+  X <- matrix(rnorm(nobs*nprd), ncol=nprd)
+  beta <- runif(nprd,min=1,max=2)
+  y <- rnorm(nobs,mean=X %*% beta)
+  expect_error(mmafit <- smamfit(y=y, X=X, method='mallows'),NA)
+  expect_error(jmafit <- smamfit(y=y, X=X, method='jackknife'),NA)
+  expect_error(olsfit <- lm.fit(x=X, y=y), NA)
+  expect_equal(as.numeric(mmafit$beta), as.numeric(olsfit$coefficients), tolerance=1e-4)
+  expect_equal(as.numeric(jmafit$beta), as.numeric(olsfit$coefficients), tolerance=1e-4)
 })
 #UNFOLD
 

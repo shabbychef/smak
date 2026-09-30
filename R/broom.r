@@ -71,6 +71,17 @@ tidy.smam <- function(x, ...) {
   return(result)
 }
 
+#' Extract Coefficients from smam
+#' 
+#' @inheritParams stats::coef
+#' @param ... Additional arguments passed to or from other methods
+#' @return A named numeric vector of coefficients.
+#' @template etc
+#' @export
+coef.smam <- function(object, ...) {
+  return(object$beta)
+}
+
 #' @title Augment
 #'
 #' @description
