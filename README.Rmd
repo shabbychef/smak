@@ -9,12 +9,11 @@ opts_chunk$set(warning=FALSE,message=FALSE)
 #opts_chunk$set(results="asis")
 opts_chunk$set(cache=TRUE,cache.path="cache/")
 
-#opts_chunk$set(fig.path="github_extra/figure/",dev=c("pdf","cairo_ps"))
-opts_chunk$set(fig.path="github_extra/figure/",dev=c("png"))
-opts_chunk$set(fig.width=5,fig.height=4,dpi=64)
+#opts_chunk$set(fig.path="tools/figure/",dev=c("pdf","cairo_ps"))
+opts_chunk$set(fig.path="tools/figure/",dev=c("png"))
+opts_chunk$set(fig.width=7,fig.height=6,dpi=100,out.width='700px',out.height='600px')
 
 # doing this means that png files are made of figures;
-# the savings is small, and it looks like shit:
 #opts_chunk$set(fig.path="figure/",dev=c("png","pdf","cairo_ps"))
 #opts_chunk$set(fig.width=4,fig.height=4)
 # for figures? this is sweave-specific?
@@ -27,8 +26,33 @@ options(width=64,digits=2)
 opts_chunk$set(size="small")
 opts_chunk$set(tidy=TRUE,tidy.opts=list(width.cutoff=50,keep.blank.line=TRUE))
 library(ggplot2)
-library(fromo)
 library(dplyr)
+library(smak)
+
+if (require(ggplot2)) {
+	theme_set(theme_minimal(base_size=12))
+	theme_update(legend.position="bottom")
+
+	if (require(viridis,quietly=TRUE)) {
+		scale_colour_discrete <- function(...) {
+			require(viridis,quietly=TRUE)
+			scale_color_viridis(discrete=TRUE,end=0.85,option='D',...)
+		}
+		scale_fill_discrete <- function(...) {
+			require(viridis,quietly=TRUE)
+			scale_fill_viridis(discrete=TRUE,end=0.85,option='D',...)
+		}
+		# wait, can I also default for continuous cases?
+		scale_colour_continuous <- function(...) {
+			require(viridis,quietly=TRUE)
+			scale_color_viridis(discrete=FALSE,end=0.85,option='D',...)
+		}
+		scale_fill_continuous <- function(...) {
+			require(viridis,quietly=TRUE)
+			scale_fill_viridis(discrete=FALSE,end=0.85,option='D',...)
+		}
+	}
+}
 
 #smak.meta <- packageDescription('smak')
 # [![Build Status](https://travis-ci.org/shabbychef/smak.png)](https://travis-ci.org/shabbychef/smak)
@@ -63,60 +87,68 @@ if (require(devtools)) {
 
 ## Replicating Figure 1
 
-```{r tryit,eval=FALSE,echo=TRUE}
+```{r example_1,eval=TRUE,echo=TRUE}
+# replicate Example 1 Figure 1 from Zhu et al.
 require(smak)
 require(mvtnorm)
 require(magrittr)
 require(dplyr)
 
-dosim <- function(nobs, R2, npred=5, rho=0.6, nsim=1000, errors=c('homoscedastic', 'heteroscedastic')) {
+# the text spells it 'homoscedastic', etc but figure 1 labels are 'Homoskedastic', etc
+dosim <- function(nobs, R2, npred=5, rho=0.6, nsim=1000, errors=c('Homoskedastic', 'Heteroskedastic'), randseed=NULL, fixed_theta=TRUE) {
 	errors <- match.arg(errors)
 	R <- rho^(toeplitz(1:npred) - 1)
-	theta <- runif(npred, min=0, max=2)
+	if (!is.null(randseed)) {
+		set.seed(randseed)
+	}
+	if (fixed_theta) {  # one value for all simulations
+		theta <- runif(npred, min=0, max=2)
+	}
+	loss_function <- function(fitted, mu) { sum((fitted - mu)^2) }
 	results <- replicate(nsim,{
 		X <- rmvnorm(nobs, sigma=R)
+		if (!fixed_theta) {  # new value for each simulation
+			theta <- runif(npred, min=0, max=2)
+		}
 		mu <- X %*% theta
 		bit <- mean((mu - mean(mu))^2)
 		sigs2 <- bit * ((1/R2) - 1)
 		epsi <- switch(errors,
-				homoscedastic={ rnorm(nobs, sd=sqrt(sigs2)) },
-				heteroscedastic={ rnorm(nobs, sd=sqrt(ifelse(seq_len(nobs) %% 2 > 0,3,1) * sigs2)) }
+				Homoskedastic={ rnorm(nobs, sd=sqrt(sigs2)) },
+				Heteroskedastic={ rnorm(nobs, sd=sqrt(ifelse(seq_len(nobs) %% 2 > 0,3,1) * sigs2)) }
 		)
 		y <- mu + epsi
 		est_smma <- smamfit(y, X, method='mallows', return.X=FALSE, return.fitted=TRUE)
 		est_sjma <- smamfit(y, X, method='jackknife', return.X=FALSE, return.fitted=TRUE)
 		est_full <- lm.fit(X, y)
-		# I think the scoring is on each i?
-		loss_smma <- sum((est_smma$fitted.values - mu)^2)
-		loss_sjma <- sum((est_sjma$fitted.values - mu)^2)
-		loss_full <- sum((est_full$fitted.values - mu)^2)
+		# score the losses
+		loss_smma <- loss_function(est_smma$fitted.values, mu)
+		loss_sjma <- loss_function(est_sjma$fitted.values, mu)
+		loss_full <- loss_function(est_full$fitted.values, mu)
 		c(smma=loss_smma, sjma=loss_sjma, full=loss_full)
 	}) %>% 
 		t() %>%
 		data.frame() %>%
-		summarize(smma=mean(smma),sjma=mean(sjma),full=mean(full))
+		summarize(SMMA=mean(smma),SJMA=mean(sjma),full=mean(full))
 }
-# dosim(100, 0.2) -> oop
-dosim(500, 0.1) -> oop
-dosim(500, 0.5) -> oop
-
-set.seed(1234)
-resu <- tidyr::crossing(tibble(R2=seq(0.1,0.9,by=0.1)),
-												tibble(errors=c('heteroscedastic','homoscedastic')),
+resu <- tidyr::crossing(tibble(R2=seq(0.05,0.95,by=0.05)),
+												tibble(errors=c('Heteroskedastic','Homoskedastic')),
 												tibble(ssize=c(50, 100, 500))) %>%
 	group_by(R2, errors, ssize) %>%
-		summarize(output=list(dosim(nobs=ssize, R2=R2, errors=errors, nsim=100))) %>%
+		summarize(output=list(dosim(nobs=ssize, R2=R2, errors=errors, nsim=1000, randseed=123))) %>%
 	ungroup() %>%
 	tidyr::unnest(output)
 
 resu %>%
-	mutate(smma=smma/full, sjma=sjma/full) %>%
+	mutate(SMMA=SMMA/full, SJMA=SJMA/full) %>%
 	select(-full) %>%
-	tidyr::gather(key=estimator,value=relative_loss,smma,sjma) %>%
+	mutate(errors=factor(errors,levels=c('Homoskedastic','Heteroskedastic'))) %>%
+	tidyr::gather(key=estimator,value=relative_loss,SMMA,SJMA) %>%
+	rename(n=ssize) %>%
 	ggplot(aes(R2, relative_loss, linetype=estimator)) + 
 	geom_line() + 
-	geom_hline(yintercept=1,linetype='dotted',alpha=0.1) +
-	scale_y_sqrt() + 
-	facet_wrap(errors ~ ssize)
-	
+	geom_hline(yintercept=1,linetype='dotted',alpha=0.5) +
+	facet_wrap(errors ~ n, labeller=labeller(n=as_labeller(~ paste0("n=", .x)), errors=label_value, .multi_line=FALSE)) +
+	labs(x="R-squared",y="Relative Risk",title="Risk of SMA Estimators",linetype="Model")
 ```
+

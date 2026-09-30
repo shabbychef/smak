@@ -40,7 +40,8 @@ The wide pragma controls how fitting deals with wide matrices \eqn{X}.
  \item{SIRSu}{Implements the SIRS procedure on the left singular values
  \eqn{U}.}
  \item{alpha}{Performs SVD, then keeps the singular values that account for
- at least \eqn{\alpha} of the total sum of singular values.}
+ at least \eqn{\alpha} of the total sum of singular values. Always keeps at
+ least one column, however.}
  \item{fixed_k}{Keep a fixed number of singular values.}
  \item{error}{Throws an error.}
 }

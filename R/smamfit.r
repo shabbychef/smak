@@ -245,19 +245,21 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
   # compute the weights hat{w}_j
   switch(method,
          jackknife={
-           Dmat <- 2 * crossprod(t(t(muhats) - y) / pmax((1 - U^2), 1e-8))
-           dvec <- rep(0, k)
+           Emat <- t(t(muhats) - y) / pmax((1 - U^2), 1e-8)
+           Emat <- t(t(Emat) + y)
+           Dmat <- crossprod(Emat)
+           dvec <- t(Emat) %*% y
            factorized <- FALSE
            # Ensure Dmat is positive definite for solve.QP numerical stability
            diag(Dmat) <- diag(Dmat) + 1e-10
          },
          mallows={
-           # dMatrix will be 2 * diag(betas^2), and we want the inverse of the
-           # square root of this, so (1/sqrt(2)) * diag(betas^-1)
+           # dMatrix will be diag(betas^2), and we want the inverse of the
+           # square root of this, so diag(abs(betas)^-1)
            # but avoid zeroes in the betas by pushing them away from zero
-           puffed_beta <- as.numeric(betas)
-           puffed_beta <- puffed_beta + pmax(abs(puffed_beta), 1e-8) * ifelse(puffed_beta < 0,-1,1)
-           invRmat <- (1/sqrt(2)) * diag(1 / puffed_beta, nrow=k)
+           puffed_beta <- abs(as.numeric(betas))
+           puffed_beta <- pmax(puffed_beta, 1e-8)
+           invRmat <- diag(1 / puffed_beta, nrow=k)
            b2 <- betas^2
            if (is.null(sigma2)) {
              rss_full <- sum(y^2) - sum(b2)
@@ -269,14 +271,15 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
              }
            } 
            Dmat <- invRmat
-           dvec <- 2 * (b2 - sigma2)
+           dvec <- (b2 - sigma2)
            factorized <- TRUE
          })
 
-  # constraints are sum(w) = 1 and w_j >= 0
-  Amat <- cbind(rep(1, k), diag(k))
-  bvec <- c(1, rep(0, k))
-  meq <- 1
+  # constraints are 0 <= w_j <= 1, see around equation (9.5) of the paper for
+  # \mathcal{H} definition.
+  Amat <- cbind(diag(k),-diag(k))
+  bvec <- c(rep(0, k),rep(-1,k))
+  meq <- 0
 
   # solve the quadratic program
   res   <- quadprog::solve.QP(Dmat, dvec, Amat, bvec, meq = meq, factorized=factorized)
@@ -284,11 +287,8 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
   # interpret
   w_opt <- res$solution
 
-  # Numerical cleanup
-  w_opt[w_opt < 0] <- 0
-  w_opt <- w_opt / sum(w_opt)
-  # rescale to mean 1, not sum 1.
-  w_opt <- length(w_opt) * w_opt
+  # Numerical cleanup projecting to \mathcal{H}
+  w_opt <- pmax(0,pmin(1,w_opt))
 
   # Fitted values and beta in original (unscaled) space.
   # In scaled space: fitted_tilde = U %*% (w_opt * a) = W^{1/2} fitted_y.

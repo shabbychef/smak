@@ -148,6 +148,23 @@ test_that("predict method", { #FOLDUP
   expect_error(prd3 <- predict(afit2, newdata=newXdf), NA)
 
 }) #UNFOLD
+test_that("fitted.values OK", { #FOLDUP
+  nfeat <- 5
+  nobs <- 100
+  set.seed(4567)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  eta <- X %*% beta
+  y <- rnorm(length(eta), mean=eta)
+  Xdf <- as.data.frame(X)
+  varnames <- colnames(Xdf)
+  Xdf$y <- y
+  fmla <- as.formula(paste0("y ~ -1 + ",paste(varnames,collapse=" + ")))
+  expect_error(bfit <- smam(fmla, Xdf), NA)
+  expect_error(prd2 <- predict(bfit, newdata=Xdf), NA)
+	expect_equal(prd2, bfit$fitted.values)
+
+}) #UNFOLD
 test_that("model and predict handle offset", { #FOLDUP
   nobs <- 100
   nfeat <- 5
