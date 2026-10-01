@@ -144,7 +144,6 @@ smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "err
 }
 
 
-
 #' @title scalable frequentist model averaging regression fit.
 #'
 #' @description 
@@ -188,6 +187,7 @@ smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "err
 #' @template etc
 #' @template smak
 #' @template ref-zhu
+#' @importFrom quadprog solve.QP
 #' @examples 
 #'
 #' nobs <- 100
@@ -282,7 +282,7 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
   meq <- 0
 
   # solve the quadratic program
-  res   <- quadprog::solve.QP(Dmat, dvec, Amat, bvec, meq = meq, factorized=factorized)
+  res   <- solve.QP(Dmat, dvec, Amat, bvec, meq = meq, factorized=factorized)
 
   # interpret
   w_opt <- res$solution
@@ -317,6 +317,7 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
   class(retv) <- 'smam'
   return(retv)
 }
+
 
 #' @title Friendly interface to scalable model averaging regression.
 #'
@@ -473,6 +474,7 @@ predict.smam <- function(
   attr(yhat, 'na.action') <- attr(dat, 'na.action')
   return(yhat)
 }
+
 
 #' @export
 #' @importFrom stats printCoefmat
