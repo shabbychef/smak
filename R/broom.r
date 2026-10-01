@@ -90,33 +90,16 @@ coef.smam <- function(object, ...) {
 #'
 #' @details
 #'
-#' Returns a table with information on the overall fit
-#' an estimated Harville or Henery model.
+#' Returns a table with predicted fits from a SMA model.
 #'
-#' @param x an object of type \code{harsm} or \code{hensm}
+#' @param x an object of type \code{smam}
 #' @param ... arguments for generic consistency.
-#' @return A glanced \code{tibble::tibble()} with fields
+#' @return An augmented data frame with added fields:
 #' \describe{
-#'  \item{df}{The degrees of freedom of the model.}
-#'  \item{logLik}{The log-likelihood of the model.}
-#'  \item{AIC}{Akaike's Information Criterion for the model.}
-#'  \item{nobs}{The number of observations, if this is available, otherwise ‘NA’.}
+#'  \item{.fitted}{The fitted values of the regression model.}
 #' }
-#' @note
-#' In the future this may include information about the regularization, if any.
-#' @seealso \code{\link[maxLik]{glance.maxLik}}.
-#'
-#' @examples
-#'
-#' # softmax on the Best Picture data
-#' data(best_picture)
-#' df <- best_picture
-#' df$place <- ifelse(df$winner,1,2)
-#' df$weight <- ifelse(df$winner,1,0)
-#'
-#' fmla <- place ~ nominated_for_BestDirector + nominated_for_BestActor + Drama
-#' fit0 <- harsm(fmla,data=df,group=year,weights=weight)
-#' print(glance(fit0))
+#' @seealso \code{\link{predict.smam}}.
+#' @inheritParams broom::augment
 #'
 #' @template etc
 #' @rdname augment
