@@ -38,7 +38,7 @@ require(dplyr)
 # figure 1 labels are 'Homoskedastic', etc
 dosim <- function(nobs, R2, npred = 5, rho = 0.6, nsim = 1000,
     errors = c("Homoskedastic", "Heteroskedastic"),
-    randseed = NULL, fixed_theta = TRUE) {
+    randseed = NULL, fixed_theta = FALSE) {
     errors <- match.arg(errors)
     R <- rho^(toeplitz(1:npred) - 1)
     if (!is.null(randseed)) {
@@ -91,7 +91,7 @@ resu <- tidyr::crossing(tibble(R2 = seq(0.05, 0.95,
     "Homoskedastic")), tibble(ssize = c(50, 100, 500))) %>%
     group_by(R2, errors, ssize) %>%
     summarize(output = list(dosim(nobs = ssize, R2 = R2,
-        errors = errors, nsim = 1000, randseed = 123))) %>%
+        errors = errors, nsim = 1000, randseed = 1234))) %>%
     ungroup() %>%
     tidyr::unnest(output)
 

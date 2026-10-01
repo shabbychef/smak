@@ -112,9 +112,11 @@ smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "err
              USV$v <- USV$v[,selvars,drop=FALSE]
            },
            fixed_k={
-             nuv <- min(nrow(X), control$k)
+             nuv <- min(nrow(X), ncol(X), control$k)
              USV <- svd(X, nu=nuv, nv=nuv)
-             USV$d <- USV$d[1:control$k]
+             USV$u <- USV$u[,1:nuv,drop=FALSE]
+             USV$d <- USV$d[1:nuv]
+             USV$v <- USV$v[,1:nuv,drop=FALSE]
            },
            alpha={
              USV <- svd(X)
@@ -245,8 +247,7 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
   # compute the weights hat{w}_j
   switch(method,
          jackknife={
-           Emat <- t(t(muhats) - y) / pmax((1 - U^2), 1e-8)
-           Emat <- t(t(Emat) + y)
+           Emat <- (muhats - y) / pmax((1 - U^2), 1e-8) + y
            Dmat <- crossprod(Emat)
            dvec <- t(Emat) %*% y
            factorized <- FALSE
@@ -312,7 +313,12 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
   if (return.X) { retv$X <- X }
   if (return.fitted) {
     fitted_scaled <- as.vector(U %*% theta_hat)
-    retv$fitted.values <- if (!is.null(wt)) fitted_scaled / root_w else fitted_scaled
+    if (!is.null(wt)) {
+      nonzero_wt <- root_w > 0
+      fitted_scaled[!nonzero_wt] <- NA_real_
+      fitted_scaled[nonzero_wt] <- fitted_scaled[nonzero_wt] / root_w[nonzero_wt]
+    }
+    retv$fitted.values <- fitted_scaled
   }
   class(retv) <- 'smam'
   return(retv)
