@@ -403,6 +403,19 @@ test_that("high weights converge to OLS", { #FOLDUP
     #expect_equal(as.numeric(afit$beta), as.numeric(bfit$beta), tolerance = 1e-6)
   }
 }) #UNFOLD
+test_that("very large weights do not crash the fit", { #FOLDUP
+  nfeat <- 5
+  nobs <- 100
+  set.seed(345)
+	replicate(5,{
+    X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+    y <- rnorm(nobs)
+    wt_large <- 10^runif(nobs, 3, 9)
+    for (method in c('jackknife', 'mallows')) {
+      expect_error(afit <- smamfit(y, X, wt = wt_large, method = method), NA)
+    }
+  })
+}) #UNFOLD
 #UNFOLD
 
 #for vim modeline: (do not edit)

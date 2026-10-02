@@ -259,6 +259,10 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
            Emat <- (muhats - y) / pmax((1 - U_lev), 1e-8) + y
            Dmat <- crossprod(Emat)
            dvec <- t(Emat) %*% y
+           # rescale Dmat and dvec to deal with large weights
+           scale_factor <- max(abs(diag(Dmat)), abs(dvec), 1)
+           Dmat <- Dmat / scale_factor
+           dvec <- dvec / scale_factor
            factorized <- FALSE
            # Ensure Dmat is positive definite for solve.QP numerical stability
            diag(Dmat) <- diag(Dmat) + 1e-10
