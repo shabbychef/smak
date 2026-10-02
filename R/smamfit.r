@@ -245,9 +245,18 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
   # compute the mu hats
   muhats = t(t(U) * as.numeric(betas))
   # compute the weights hat{w}_j
+  n_eff <- if (!is.null(wt)) sum(wt) else n
+  if (!is.null(wt)) {
+    U_lev <- U^2
+    pos <- wt > 0
+    U_lev[pos, ] <- U_lev[pos, , drop = FALSE] / wt[pos]
+    U_lev[!pos, ] <- 0
+  } else {
+    U_lev <- U^2
+  }
   switch(method,
          jackknife={
-           Emat <- (muhats - y) / pmax((1 - U^2), 1e-8) + y
+           Emat <- (muhats - y) / pmax((1 - U_lev), 1e-8) + y
            Dmat <- crossprod(Emat)
            dvec <- t(Emat) %*% y
            factorized <- FALSE
@@ -264,11 +273,11 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
            b2 <- betas^2
            if (is.null(sigma2)) {
              rss_full <- sum(y^2) - sum(b2)
-             if (n > k) {
-               sigma2 <- rss_full / (n - k)
+             if (n_eff > k) {
+               sigma2 <- rss_full / (n_eff - k)
              } else {
                # Fallback for saturated cases
-               sigma2 <- rss_full / n
+               sigma2 <- rss_full / n_eff
              }
            } 
            Dmat <- invRmat

@@ -300,5 +300,110 @@ test_that("wide methods", { #FOLDUP
 }) #UNFOLD
 #UNFOLD
 
+context("weights") #FOLDUP
+test_that("smamfit weights act as replication weights", { #FOLDUP
+  nfeat <- 4
+  nobs <- 40
+  set.seed(9876)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  y <- rnorm(nobs, mean = X %*% beta)
+  wt <- rep(2, nobs)
+
+  idx <- rep(seq_len(nobs), times = wt)
+  X_dup <- X[idx, ]
+  y_dup <- y[idx]
+
+  for (method in c('jackknife', 'mallows')) {
+    expect_error(afit <- smamfit(y, X, wt = wt, method = method), NA)
+    expect_error(bfit <- smamfit(y_dup, X_dup, method = method), NA)
+    expect_equal(as.numeric(afit$beta), as.numeric(bfit$beta), tolerance = 1e-6)
+    expect_equal(as.numeric(afit$weights), as.numeric(bfit$weights), tolerance = 1e-6)
+    expect_equal(as.numeric(afit$sigma2), as.numeric(bfit$sigma2), tolerance = 1e-6)
+  }
+
+  wt <- sample(1:4, nobs, replace = TRUE)
+
+  idx <- rep(seq_len(nobs), times = wt)
+  X_dup <- X[idx, ]
+  y_dup <- y[idx]
+
+  for (method in c('jackknife', 'mallows')) {
+    expect_error(afit <- smamfit(y, X, wt = wt, method = method), NA)
+    expect_error(bfit <- smamfit(y_dup, X_dup, method = method), NA)
+    expect_equal(as.numeric(afit$beta), as.numeric(bfit$beta), tolerance = 1e-6)
+    expect_equal(as.numeric(afit$weights), as.numeric(bfit$weights), tolerance = 1e-6)
+    expect_equal(as.numeric(afit$sigma2), as.numeric(bfit$sigma2), tolerance = 1e-6)
+  }
+
+}) #UNFOLD
+test_that("smam formula weights act as replication weights", { #FOLDUP
+  nfeat <- 4
+  nobs <- 40
+  set.seed(5432)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  y <- rnorm(nobs, mean = X %*% beta)
+  wts <- sample(1:4, nobs, replace = TRUE)
+
+  df <- as.data.frame(X)
+  df$y <- y
+  df$wts <- wts
+  fmla <- as.formula(paste0("y ~ ", paste(names(as.data.frame(X)), collapse = " + ")))
+
+  idx <- rep(seq_len(nobs), times = wts)
+  df_dup <- df[idx, ]
+  df_dup$wts <- NULL
+
+  # Test bare symbol, string, and vector weight specifications
+  expect_error(fit_sym <- smam(fmla, df, weights = wts), NA)
+  expect_error(fit_str <- smam(fmla, df, weights = "wts"), NA)
+  expect_error(fit_vec <- smam(fmla, df, weights = df$wts), NA)
+  expect_error(fit_dup <- smam(fmla, df_dup), NA)
+
+  expect_equal(as.numeric(fit_sym$beta), as.numeric(fit_str$beta))
+  expect_equal(as.numeric(fit_sym$beta), as.numeric(fit_vec$beta))
+  expect_equal(as.numeric(fit_sym$beta), as.numeric(fit_dup$beta), tolerance = 1e-6)
+  expect_equal(as.numeric(fit_sym$weights), as.numeric(fit_dup$weights), tolerance = 1e-6)
+}) #UNFOLD
+test_that("zero weights drop observations like row deletion", { #FOLDUP
+  nfeat <- 4
+  nobs <- 40
+  set.seed(1357)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  y <- rnorm(nobs, mean = X %*% beta)
+  wt <- sample(1:4, nobs, replace = TRUE)
+  wt[c(3, 7, 12)] <- 0
+
+  idx <- rep(seq_len(nobs), times = wt)
+  X_dup <- X[idx, ]
+  y_dup <- y[idx]
+
+  for (method in c('jackknife', 'mallows')) {
+    expect_error(afit <- smamfit(y, X, wt = wt, method = method), NA)
+    expect_error(bfit <- smamfit(y_dup, X_dup, method = method), NA)
+    expect_equal(as.numeric(afit$beta), as.numeric(bfit$beta), tolerance = 1e-6)
+  }
+}) #UNFOLD
+test_that("high weights converge to OLS", { #FOLDUP
+  nfeat <- 3
+  nobs <- 100
+  set.seed(1212)
+  X <- matrix(rnorm(nobs * nfeat), ncol = nfeat)
+  beta <- rnorm(nfeat)
+  y <- rnorm(nobs, mean = X %*% beta)
+  wt <- rep(10000,nobs)
+
+  expect_error(olsfit <- lm.fit(x=X, y=y), NA)
+  for (method in c('jackknife', 'mallows')) {
+    expect_error(bfit <- smamfit(y, X, wt = wt, method = method), NA)
+    expect_equal(as.numeric(olsfit$coefficients), as.numeric(bfit$beta), tolerance = 1e-4)
+    #expect_error(afit <- smamfit(y, X, method = method), NA)
+    #expect_equal(as.numeric(afit$beta), as.numeric(bfit$beta), tolerance = 1e-6)
+  }
+}) #UNFOLD
+#UNFOLD
+
 #for vim modeline: (do not edit)
 # vim:ts=2:sw=2:tw=79:fdm=marker:fmr=FOLDUP,UNFOLD:cms=#%s:syn=r:ft=r:ai:si:cin:nu:fo=croql:cino=p0t0c5(0:
