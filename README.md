@@ -140,7 +140,7 @@ similar, except it includes an omitted variable which drives the expected value
 of the $y_i$. Note that the $X$ still has correlated columns, so we get some
 information about the omitted variable in the observed $X$.
 The relative loss plots here match those in the original paper, though
-we see somewhat
+we see somewhat different shapes of some of the curves.
 
 
 
