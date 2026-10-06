@@ -45,7 +45,7 @@ generics::augment
 #'
 #' @param x an object of type \code{smam}.
 #' @param ... arguments for generic consistency.
-#' @return A tidy \code{tibble::tibble()} with fields
+#' @return A tidy data frame with fields
 #' \describe{
 #'  \item{term}{The name of the estimated parameter. Betas typically come before gammas.}
 #'  \item{estimate}{The estimated parameter.}
@@ -58,7 +58,7 @@ generics::augment
 #' X <- matrix(rnorm(nobs * nfeat),ncol=nfeat)
 #' beta <- rnorm(nfeat)
 #' eta <- X %*% beta
-#' y <- rnorm(ncol(X), mean=X %*% beta, sd=1)
+#' y <- rnorm(nrow(X), mean=X %*% beta, sd=1)
 #'
 #' mod0 <- smamfit(y=y,X=X)
 #' print(tidy(mod0))
@@ -99,11 +99,10 @@ coef.smam <- function(object, ...) {
 #'  \item{.fitted}{The fitted values of the regression model.}
 #' }
 #' @seealso \code{\link{predict.smam}}.
-#' @inheritParams broom::augment
+#' @inheritParams broom::augment.lm
 #'
 #' @template etc
 #' @rdname augment
-#' @name augment
 #' @export
 augment.smam <- function(x, 
        data = NULL,
@@ -131,7 +130,7 @@ augment.smam <- function(x,
   }
 
   res$.fitted <- as.numeric(preds)
-  return(tibble::as_tibble(res))
+  return(res)
 }
 
 #for vim modeline: (do not edit)

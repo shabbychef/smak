@@ -50,6 +50,9 @@ the output.}
 This is passed to \code{\link{smam.control}}.}
 
 \item{formula}{an optional formula which will be saved in the object for prediction step later.}
+
+\item{...}{other arguments, which are essentially passed on to \code{\link{smam.control}}, 
+if \code{control} is not given.}
 }
 \value{
 An object of class \code{smam}.
@@ -78,7 +81,7 @@ set.seed(1234)
 X <- matrix(rnorm(nobs * nfeat),ncol=nfeat)
 beta <- rnorm(nfeat)
 eta <- X \%*\% beta
-y <- rnorm(ncol(X), mean=X \%*\% beta, sd=1)
+y <- rnorm(nrow(X), mean=X \%*\% beta, sd=1)
 
 mod0 <- smamfit(y=y,X=X)
 summary(mod0)

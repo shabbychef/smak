@@ -12,7 +12,7 @@
 \item{...}{arguments for generic consistency.}
 }
 \value{
-A tidy \code{tibble::tibble()} with fields
+A tidy data frame with fields
 \describe{
  \item{term}{The name of the estimated parameter. Betas typically come before gammas.}
  \item{estimate}{The estimated parameter.}
@@ -34,7 +34,7 @@ set.seed(1234)
 X <- matrix(rnorm(nobs * nfeat),ncol=nfeat)
 beta <- rnorm(nfeat)
 eta <- X \%*\% beta
-y <- rnorm(ncol(X), mean=X \%*\% beta, sd=1)
+y <- rnorm(nrow(X), mean=X \%*\% beta, sd=1)
 
 mod0 <- smamfit(y=y,X=X)
 print(tidy(mod0))

@@ -25,13 +25,13 @@ oversample with noise; for hard thresholding we pick the top \eqn{N} values.}
 \item{N}{the number of variables to select for hard thresholding. Defaults
 to \eqn{n / log(n)}.}
 
+\item{d_prop}{for soft thresholding controls the number of noise variables
+added to the set. We add \eqn{dprop p} variables.}
+
 \item{ties_pragma}{the method for dealing with ties in the \eqn{y} values.
 For \sQuote{ignore} we ignore them and implement the classic value of
 Zhu et. al.  For \sQuote{half_value} the indicator function returns one half
 for tied values in the \eqn{y}.}
-
-\item{dprop}{for soft thresholding controls the number of noise variables
-added to the set. We add \eqn{dprop p} variables.}
 }
 \value{
 A sorted vector of the indices of which columns of \code{X} would be

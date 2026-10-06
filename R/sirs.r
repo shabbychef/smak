@@ -85,7 +85,7 @@
 #' oversample with noise; for hard thresholding we pick the top \eqn{N} values.
 #' @param N  the number of variables to select for hard thresholding. Defaults
 #' to \eqn{n / log(n)}.
-#' @param dprop  for soft thresholding controls the number of noise variables
+#' @param d_prop  for soft thresholding controls the number of noise variables
 #' added to the set. We add \eqn{dprop p} variables.
 #' @param ties_pragma  the method for dealing with ties in the \eqn{y} values.
 #' For \sQuote{ignore} we ignore them and implement the classic value of
@@ -109,6 +109,7 @@
 #' 
 #' hard_vals <- sirs(y, X, thresholding='hard')
 #' all(true_vars %in% hard_vals)
+#' @importFrom stats rnorm sd
 #' @export
 sirs <- function(y, X, thresholding=c('hard','soft'), N=NULL, d_prop=1.0,
                  ties_pragma=c('ignore', 'half_value')) {

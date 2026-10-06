@@ -5,7 +5,7 @@ Authors@R: c(person(c("Steven", "E."), "Pav",
     email="shabbychef@gmail.com",
     comment = c(ORCID = "0000-0002-4197-6195")))
 Version: 0.0.0.0001
-Date: 2026-09-29
+Date: 2026-10-06
 License: LGPL-3
 Title: Scalable Model Averageing Kit
 BugReports: https://github.com/shabbychef/smak/issues
@@ -15,12 +15,14 @@ Description: utilities for performing regression tasks with
 Depends: 
     R (>= 4.0)
 Imports:
+    generics,
+    methods,
     quadprog
 Suggests: 
+    broom,
     testthat, 
     knitr
 URL: https://github.com/shabbychef/smak
-VignetteBuilder: knitr
 Encoding: UTF-8
 Collate:
     'broom.r'

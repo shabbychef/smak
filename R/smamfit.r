@@ -183,6 +183,8 @@ smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "err
 #' @param control a list of parameters for controlling the the fitting process.
 #' This is passed to \code{\link{smam.control}}.
 #' @param formula  an optional formula which will be saved in the object for prediction step later.
+#' @param ... other arguments, which are essentially passed on to \code{\link{smam.control}}, 
+#' if \code{control} is not given.
 #' @return An object of class \code{smam}.
 #' @keywords fitting
 #' @seealso the friendly interface \code{\link{smam}}.
@@ -198,7 +200,7 @@ smam.control <- function(wide_pragma=c("SIRS", "SIRSu", "alpha", "fixed_k", "err
 #' X <- matrix(rnorm(nobs * nfeat),ncol=nfeat)
 #' beta <- rnorm(nfeat)
 #' eta <- X %*% beta
-#' y <- rnorm(ncol(X), mean=X %*% beta, sd=1)
+#' y <- rnorm(nrow(X), mean=X %*% beta, sd=1)
 #'
 #' mod0 <- smamfit(y=y,X=X)
 #' summary(mod0)
@@ -359,6 +361,7 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
 #' @param weights  an optional vector of weights, or the string or bare name of the
 #' weights in the \code{data} for use in the fitting process. Set to \code{NULL}
 #' for none.
+#' @param ... other arguments, which are passed on to \code{\link{smamfit}}.
 #' @template etc
 #' @return An object of class \code{smam}.
 #' @keywords fitting
@@ -371,7 +374,7 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
 #' set.seed(1234)
 #' X <- matrix(rnorm(nobs * nfeat),ncol=nfeat)
 #' beta <- rnorm(nfeat)
-#' y <- rnorm(ncol(X), mean=X %*% beta, sd=1)
+#' y <- rnorm(nrow(X), mean=X %*% beta, sd=1)
 #' # now the pretty frontend
 #' data <- cbind(data.frame(outcome=y),as.data.frame(X))
 #'
@@ -380,9 +383,9 @@ smamfit <- function(y, X, method=c('jackknife','mallows'), wt=NULL, sigma2=NULL,
 #'
 #' # with weights
 #' data$wts <- runif(nrow(data),min=1,max=2)
-#' fitm <- smam(fmla,data,group=race,weights=wts)
+#' fitw <- smam(fmla,data,weights=wts)
 #'
-#' @importFrom stats coef formula model.frame model.matrix na.omit model.response model.weights
+#' @importFrom stats coef formula model.frame model.matrix na.omit model.response model.weights .getXlevels
 #' @export
 #' @rdname smam
 smam <- function(formula,data,weights=NULL,na.action=na.omit,method=c('jackknife','mallows'), ...) {
@@ -426,20 +429,16 @@ smam <- function(formula,data,weights=NULL,na.action=na.omit,method=c('jackknife
 
 #' @rdname smam    
 #' @importFrom stats predict
+#' @param object  Object of class inheriting from \code{smam}.
 #' @param newdata  a \code{data.frame} from which we can extract a model
 #' frame via the formula of the \code{object}.
 #' @param ... other arguments.
-#' @param type  indicates which prediction should be returned:
-#' \describe{
-#' \item{\code{eta}}{The odds.}
-#' \item{\code{mu}}{The probability.}
-#' \item{\code{erank}}{The expected rank.}
-#' }
-#' @param na.action  How to deal with missing values in \code{y}, \code{g},
-#' \code{X}, \code{wt}, \code{eta0}.
-#' @seealso \code{\link{smax}}, \code{\link{harsm_invlink}}.
+#' @param na.action  How to deal with missing values in \code{y}, 
+#' \code{X}, \code{wt}.
+#' @seealso \code{\link{smam}}, \code{\link{smamfit}}.
 #' @importFrom stats delete.response terms model.offset model.matrix model.extract as.formula na.pass
 #' @export
+#' @inheritParams predict.lm
 #' @method predict smam
 predict.smam <- function(
   object,

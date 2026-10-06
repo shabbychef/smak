@@ -27,9 +27,10 @@ GNU Lesser General Public License for more details.
 }
 
 \references{
-Brandt, Michael W. "Portfolio Choice Problems." Handbook of Financial
-Econometrics 1 (2009): 269--336. 
-\url{http://shr.receptidocs.ru/docs/5/4748/conv_1/file1.pdf#page=298}
+Zhu, Rong, Haiying Wang, Xinyu Zhang, and Hua Liang. 2023. 
+“A Scalable Frequentist Model Averaging Method.” 
+Journal of Business & Economic Statistics 41 (4): 1228–37. 
+\doi{10.1080/07350015.2022.2116442}.
 }
 \seealso{
 Useful links:

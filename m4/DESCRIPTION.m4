@@ -19,13 +19,16 @@ Description: utilities for performing regression tasks with
 Depends: 
     R (>= 4.0)
 Imports:
+    generics,
+    methods,
     quadprog
 dnl LinkingTo: Rcpp
 Suggests: 
+    broom,
     testthat, 
     knitr
 URL: https://github.com/shabbychef/PKG_NAME()
-VignetteBuilder: knitr
+dnl VignetteBuilder: knitr
 Encoding: UTF-8
 Collate:
 m4_R_FILES()

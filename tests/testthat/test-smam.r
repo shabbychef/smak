@@ -412,7 +412,7 @@ test_that("very large weights do not crash the fit", { #FOLDUP
     y <- rnorm(nobs)
     wt_large <- 10^runif(nobs, 3, 9)
     for (method in c('jackknife', 'mallows')) {
-      expect_error(afit <- smamfit(y, X, wt = wt_large, method = method), NA)
+      expect_error(afit <- smamfit(y, X, method=method, wt = wt_large), NA)
     }
   })
 }) #UNFOLD

@@ -35,8 +35,8 @@ smam(
 weights in the \code{data} for use in the fitting process. Set to \code{NULL}
 for none.}
 
-\item{na.action}{How to deal with missing values in \code{y}, \code{g},
-\code{X}, \code{wt}, \code{eta0}.}
+\item{na.action}{How to deal with missing values in \code{y}, 
+\code{X}, \code{wt}.}
 
 \item{method}{the method to be used; for fitting, currently only
     \code{method = "qr"} is supported; \code{method = "model.frame"} returns
@@ -44,17 +44,12 @@ for none.}
 
 \item{...}{other arguments.}
 
+\item{object}{Object of class inheriting from \code{smam}.}
+
 \item{newdata}{a \code{data.frame} from which we can extract a model
 frame via the formula of the \code{object}.}
 
 \item{x}{an object used to select a method.}
-
-\item{type}{indicates which prediction should be returned:
-\describe{
-\item{\code{eta}}{The odds.}
-\item{\code{mu}}{The probability.}
-\item{\code{erank}}{The expected rank.}
-}}
 }
 \value{
 An object of class \code{smam}.
@@ -76,7 +71,7 @@ nfeat <- 5
 set.seed(1234)
 X <- matrix(rnorm(nobs * nfeat),ncol=nfeat)
 beta <- rnorm(nfeat)
-y <- rnorm(ncol(X), mean=X \%*\% beta, sd=1)
+y <- rnorm(nrow(X), mean=X \%*\% beta, sd=1)
 # now the pretty frontend
 data <- cbind(data.frame(outcome=y),as.data.frame(X))
 
@@ -85,13 +80,13 @@ fitm <- smam(fmla,data)
 
 # with weights
 data$wts <- runif(nrow(data),min=1,max=2)
-fitm <- smam(fmla,data,group=race,weights=wts)
+fitw <- smam(fmla,data,weights=wts)
 
 }
 \seealso{
 \code{\link{smamfit}}.
 
-\code{\link{smax}}, \code{\link{harsm_invlink}}.
+\code{\link{smam}}, \code{\link{smamfit}}.
 }
 \author{
 Steven E. Pav \email{shabbychef@gmail.com}
