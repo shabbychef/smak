@@ -9,7 +9,7 @@ News for package \sQuote{smak}
 \newcommand{\CRANpkg}{\href{https://cran.r-project.org/package=#1}{\pkg{#1}}}
 \newcommand{\smak}{\CRANpkg{smak}}
 }
-\section{\smak{} Initial Version 0.1.0 (2026-09-22) }{
+\section{\smak{} Initial Version 0.1.0 (2026-10-06) }{
 
 \itemize{
 \item first CRAN release.

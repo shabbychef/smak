@@ -438,7 +438,7 @@ smam <- function(formula,data,weights=NULL,na.action=na.omit,method=c('jackknife
 #' @seealso \code{\link{smam}}, \code{\link{smamfit}}.
 #' @importFrom stats delete.response terms model.offset model.matrix model.extract as.formula na.pass
 #' @export
-#' @inheritParams predict.lm
+#' @inheritParams stats::predict.lm
 #' @method predict smam
 predict.smam <- function(
   object,
