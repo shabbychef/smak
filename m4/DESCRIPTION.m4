@@ -13,9 +13,13 @@ Date: DATE()
 License: LGPL-3
 Title: Scalable Model Averageing Kit
 BugReports: https://github.com/shabbychef/PKG_NAME()/issues
-Description: utilities for performing regression tasks with 
-    Frequentist model averaging, via the scalable method of
+Description: Supports frequentist model averaging on linear
+    regression problems via the scalable method of
     Zhu et. al. (2022) <doi:10.1080/07350015.2022.2116442>.
+    The scalable model averaging technique projects to
+    singular vectors, performs one linear regression per singular
+    vector, then combines the estimates to optimize either
+    Mallows' criterion, or the jackknife estimate of error.
 Depends: 
     R (>= 4.0)
 Imports:
