@@ -2,7 +2,7 @@
 
 # smak
 
-Scalable Model Averaging Kit.  Implements the [scalable frequentist model averaging](dx.doi.org/10.1080/07350015.2022.2116442)
+Scalable Model Averaging Kit.  Implements the [scalable frequentist model averaging](https://dx.doi.org/10.1080/07350015.2022.2116442)
 approach to linear regression of Zhu _et al._, 2022.
 
 
@@ -11,7 +11,7 @@ approach to linear regression of Zhu _et al._, 2022.
 ## Installation
 
 This package may be installed from CRAN; the latest version may be
-found on [github](https://www.github.com/shabbychef/smak "smak")
+found on [github](https://github.com/shabbychef/smak "smak")
 via devtools:
 
 
